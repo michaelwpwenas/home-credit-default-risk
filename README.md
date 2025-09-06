@@ -48,13 +48,11 @@ home-credit-default-risk/
 ├── notebook-2.ipynb           # Model training & evaluation
 ├── templates/
 │   └── index.html             # Dashboard interface
-├── models/                    # Trained model files
-│   ├── logistic_regression_model.pkl
-│   ├── gradient_boosting_model.pkl
-│   └── scaler.pkl
-├── processed_data/            # Processed datasets
-│   ├── processed_train.csv
-│   └── processed_test.csv
+├── logistic_regression_model.pkl
+├── gradient_boosting_model.pkl
+├── scaler.pkl
+├── processed_train.csv
+├── processed_test.csv
 └── README.md
 ```
 
@@ -194,3 +192,4 @@ For technical support or questions about implementation:
 ---
 
 **Disclaimer**: This project is for demonstration purposes. Actual implementation in production environments should follow appropriate regulatory guidelines and compliance requirements.
+

@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Credit Indonesia - Loan Default Prediction</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <style>
+    :root{
+      --bg-1: #050508;
+      --bg-2: #0e0b14;
+      --panel: rgba(12,12,16,0.6);
+      --neon-magenta: #ff2d95;
+      --neon-cyan: #00f0ff;
+      --muted: #9aa0a6;
+      --glass: linear-gradient(135deg, rgba(255,45,149,0.06), rgba(0,240,255,0.03));
+      --glass-border: rgba(255,255,255,0.04);
+      --accent: var(--neon-cyan);
+    }
+
+    /* Page */
+    html,body{
+      height:100%;
+      margin:0;
+      background:
+        radial-gradient(1000px 400px at 10% 10%, rgba(0,240,255,0.03), transparent 10%),
+        radial-gradient(600px 300px at 90% 90%, rgba(255,45,149,0.025), transparent 10%),
+        linear-gradient(180deg,var(--bg-1),var(--bg-2));
+      color:#dfe7ee;
+      font-family: "Exo 2", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding-top:72px; /* for navbar */
+    }
+
+    /* NAVBAR */
+    .navbar{
+      position:fixed;
+      top:0;
+      left:0;
+      right:0;
+      height:64px;
+      display:flex;
+      align-items:center;
+      gap:18px;
+      padding:10px 22px;
+      backdrop-filter: blur(6px) saturate(140%);
+      background: linear-gradient(90deg, rgba(8,8,12,0.6), rgba(8,8,12,0.35));
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      z-index:100;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      text-decoration:none;
+      color:inherit;
+    }
+    .brand img{
+      height:44px;
+      width:44px;
+      object-fit:contain;
+      filter: drop-shadow(0 6px 12px rgba(0,0,0,0.6));
+      border-radius:8px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      padding:4px;
+    }
+    .brand .title{
+      font-family: "Orbitron", sans-serif;
+      font-weight:700;
+      letter-spacing:0.6px;
+      font-size:16px;
+      color:var(--neon-magenta);
+      text-shadow: 0 0 8px rgba(255,45,149,0.12);
+    }
+    .nav-links{
+      margin-left:18px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .nav-links a{
+      color:var(--muted);
+      text-decoration:none;
+      font-size:13px;
+      padding:8px 10px;
+      border-radius:8px;
+    }
+    .nav-links a:hover{
+      color: #fff;
+      background: rgba(0,0,0,0.25);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 18px rgba(0,240,255,0.03) inset;
+    }
+
+    /* Layout */
+    .container{
+      max-width:1200px;
+      margin: 24px auto;
+      padding: 18px;
+      display:grid;
+      gap:18px;
+      grid-template-columns: 1fr 1fr;
+    }
+    
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+      grid-column: 1 / -1;
+    }
+    
+    .full-width {
+      grid-column: 1 / -1;
+    }
+
+    /* Full-width for smaller screens */
+    @media (max-width:980px){
+      .container{ grid-template-columns: 1fr; padding:16px; }
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .right-col { order: 2; }
+    }
+
+    /* Card */
+    .card{
+      background: var(--panel);
+      border-radius:14px;
+      padding:18px;
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 6px 30px rgba(0,0,0,0.6), 0 0 40px rgba(0,0,0,0.25) inset;
+      backdrop-filter: blur(6px);
+      position:relative;
+      overflow:hidden;
+    }
+
+    .card h2{
+      margin:0 0 12px 0;
+      font-family: "Orbitron", sans-serif;
+      font-weight:600;
+      font-size:14px;
+      color:var(--neon-cyan);
+      letter-spacing:0.6px;
+    }
+
+    .subtle { color: var(--muted); font-size:13px; margin-bottom:8px; }
+
+    .chart img{
+      width:100%;
+      height:auto;
+      display:block;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,0.03);
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.02));
+      box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+    }
+
+    /* Controls */
+    .controls{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    select, input[type="text"]{
+      padding:10px 12px;
+      border-radius:8px;
+      border: 1px solid rgba(255,255,255,0.04);
+      background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(0,0,0,0.03));
+      color: #e6eef8;
+      font-size:14px;
+      outline:none;
+      min-width:160px;
+    }
+    select:focus, input:focus{ box-shadow: 0 0 18px rgba(0,240,255,0.04); border-color: rgba(0,240,255,0.14); }
+
+    button{
+      cursor:pointer;
+      padding:10px 14px;
+      border-radius:10px;
+      border: none;
+      font-weight:600;
+      letter-spacing:0.3px;
+      background: linear-gradient(90deg, rgba(0,240,255,0.14), rgba(255,45,149,0.08));
+      color: #fff;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+    button:hover{ transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
+
+    /* Result box */
+    .result{
+      margin-top:10px;
+      padding:14px;
+      border-radius:10px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.25), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.03);
+      color:#e7f8ff;
+    }
+    .risk-badge{
+      display:inline-block;
+      padding:6px 10px;
+      border-radius:999px;
+      font-weight:700;
+      font-family:"Orbitron",sans-serif;
+      font-size:13px;
+      letter-spacing:0.5px;
+      text-transform:uppercase;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+    }
+    
+    .risk-high {
+      background: linear-gradient(90deg, rgba(255,45,149,0.2), rgba(255,45,149,0.1));
+      color: #ff2d95;
+    }
+    
+    .risk-medium {
+      background: linear-gradient(90deg, rgba(255,165,0,0.2), rgba(255,165,0,0.1));
+      color: #ffa500;
+    }
+    
+    .risk-low {
+      background: linear-gradient(90deg, rgba(0,240,255,0.2), rgba(0,240,255,0.1));
+      color: #00f0ff;
+    }
+
+    /* small helper */
+    .small { font-size:13px; color:var(--muted); }
+
+    /* Loader overlay */
+    .loader {
+      display:none;
+      position:absolute;
+      inset:0;
+      justify-content:center;
+      align-items:center;
+      background: linear-gradient(180deg, rgba(5,5,8,0.6), rgba(5,5,8,0.55));
+      z-index:40;
+      border-radius:inherit;
+    }
+    .loader .spinner{
+      width:54px;height:54px;border-radius:50%;
+      border:4px solid rgba(255,255,255,0.06);
+      border-top-color: var(--neon-magenta);
+      animation:spin 1s linear infinite;
+      box-shadow: 0 0 18px rgba(255,45,149,0.12);
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* tiny toast */
+    .toast{
+      position:fixed;
+      right:18px;
+      bottom:18px;
+      background:linear-gradient(180deg, rgba(10,10,12,0.85), rgba(8,8,10,0.7));
+      padding:10px 14px;
+      border-radius:10px;
+      color:#eaf7ff;
+      border:1px solid rgba(255,255,255,0.03);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+      display:none;
+      z-index:200;
+    }
+
+    /* footer small */
+    .meta {
+      font-size:12px;
+      color:var(--muted);
+      display:flex;
+      gap:8px;
+      align-items:center;
+      margin-top:8px;
+    }
+    
+    .dashboard-header {
+      grid-column: 1 / -1;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .dashboard-header h1 {
+      font-family: "Orbitron", sans-serif;
+      color: var(--neon-cyan);
+      margin-bottom: 8px;
+    }
+    
+    .dashboard-header p {
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    </style>
+</head>
+<body>
+  <!-- NAV -->
+  <nav class="navbar" role="navigation" aria-label="main navigation">
+    <a class="brand" href="#">
+      <img src="https://i.postimg.cc/KcsQNJLQ/807dcabc2ea5f525d928466f98ed5b95-1655085458-293-removebg-preview.png" alt="Company logo">
+      <div>
+        <div class="title">MICHAEL WENAS ANALYTICS</div>
+        <div style="font-size:11px; color:var(--muted); margin-top:2px;">Home Credit Indonesia - Loan Default Prediction</div>
+      </div>
+    </a>
+
+    <div class="nav-links" role="menubar" aria-label="Navigation links">
+      <a href="/" title="Dashboard (current)">Dashboard</a>
+      <a href="#" title="Github">Github</a>
+      <a href="https://linktr.ee/michaelwenas" title="Linktree">Linktree</a>
+    </div>
+
+    <div style="margin-left:auto; display:flex; gap:10px; align-items:center;">
+      <div class="small">Connected</div>
+      <div style="font-family:'Orbitron',sans-serif; font-weight:700; color:var(--neon-cyan); font-size:13px;">API</div>
+    </div>
+  </nav>
+  
+  <main class="container" role="main">
+    <div class="dashboard-header">
+      <h1>Loan Default Prediction Dashboard</h1>
+      <p>Advanced machine learning models to predict loan default risk and optimize lending decisions</p>
+    </div>
+    
+    <div class="dashboard-grid">
+      <!-- Target Distribution -->
+      <div class="card">
+        <h2>Target Distribution</h2>
+        <div class="subtle">Class imbalance visualization</div>
+        <div class="chart">
+          <img id="targetChart" src="" alt="Target Distribution">
+        </div>
+      </div>
+      
+      <!-- Feature Correlation -->
+      <div class="card">
+        <h2>Feature Correlation with Target</h2>
+        <div class="subtle">Top 10 most correlated features</div>
+        <div class="chart">
+          <img id="featureCorrelationChart" src="" alt="Feature Correlation">
+        </div>
+      </div>
+      
+      <!-- Income vs Credit -->
+      <div class="card">
+        <h2>Income vs Credit Amount</h2>
+        <div class="subtle">Colored by default status</div>
+        <div class="chart">
+          <img id="incomeVsCreditChart" src="" alt="Income vs Credit">
+        </div>
+      </div>
+      
+      <!-- ROC Curves -->
+      <div class="card">
+        <h2>Model Performance (ROC Curves)</h2>
+        <div class="subtle">Comparison of Logistic Regression vs Gradient Boosting</div>
+        <div class="chart">
+          <img id="rocCurvesChart" src="" alt="ROC Curves">
+        </div>
+      </div>
+      
+      <!-- Feature Importance -->
+      <div class="card">
+        <h2>Feature Importance</h2>
+        <div class="subtle">Top predictive features by model type</div>
+        <div class="controls">
+          <select id="modelSelect">
+            <option value="lr">Logistic Regression</option>
+            <option value="gb">Gradient Boosting</option>
+          </select>
+        </div>
+        <div class="chart">
+          <img id="featureImportanceChart" src="" alt="Feature Importance">
+        </div>
+      </div>
+      
+      <!-- Prediction Form -->
+      <div class="card">
+        <h2>Default Risk Prediction</h2>
+        <div class="subtle">Enter applicant ID to predict default probability</div>
+        <div class="controls">
+          <input type="text" id="skId" placeholder="Enter SK_ID_CURR">
+          <button onclick="predict()">Predict</button>
+        </div>
+        <div class="result" id="predictionResult">
+          <p class="small">Enter an applicant ID to see prediction results</p>
+        </div>
+      </div>
+    </div>
+  </main>
+    
+  <script>
+    // Load all charts on page load
+    $(document).ready(function() {
+      loadTargetChart();
+      loadFeatureCorrelationChart();
+      loadIncomeVsCreditChart();
+      loadRocCurvesChart();
+      loadFeatureImportanceChart();
+      
+      // Show connection status
+      showToast("Dashboard connected successfully");
+    });
+    
+    function loadTargetChart() {
+      showLoader('targetChart');
+      $.get('/target_distribution', function(data) {
+        $('#targetChart').attr('src', data.image);
+        hideLoader('targetChart');
+      }).fail(function() {
+        hideLoader('targetChart');
+        showToast("Error loading target distribution chart");
+      });
+    }
+    
+    function loadFeatureCorrelationChart() {
+      showLoader('featureCorrelationChart');
+      $.get('/feature_correlation', function(data) {
+        $('#featureCorrelationChart').attr('src', data.image);
+        hideLoader('featureCorrelationChart');
+      }).fail(function() {
+        hideLoader('featureCorrelationChart');
+        showToast("Error loading feature correlation chart");
+      });
+    }
+    
+    function loadIncomeVsCreditChart() {
+      showLoader('incomeVsCreditChart');
+      $.get('/income_vs_credit', function(data) {
+        $('#incomeVsCreditChart').attr('src', data.image);
+        hideLoader('incomeVsCreditChart');
+      }).fail(function() {
+        hideLoader('incomeVsCreditChart');
+        showToast("Error loading income vs credit chart");
+      });
+    }
+    
+    function loadRocCurvesChart() {
+      showLoader('rocCurvesChart');
+      $.get('/roc_curves', function(data) {
+        $('#rocCurvesChart').attr('src', data.image);
+        hideLoader('rocCurvesChart');
+      }).fail(function() {
+        hideLoader('rocCurvesChart');
+        showToast("Error loading ROC curves chart");
+      });
+    }
+    
+    function loadFeatureImportanceChart() {
+      const model = $('#modelSelect').val();
+      showLoader('featureImportanceChart');
+      $.get('/feature_importance?model=' + model, function(data) {
+        $('#featureImportanceChart').attr('src', data.image);
+        hideLoader('featureImportanceChart');
+      }).fail(function() {
+        hideLoader('featureImportanceChart');
+        showToast("Error loading feature importance chart");
+      });
+    }
+    
+    $('#modelSelect').change(loadFeatureImportanceChart);
+    
+    function predict() {
+      const skId = $('#skId').val();
+      if (!skId) {
+        showToast("Please enter an applicant ID");
+        return;
+      }
+      
+      $('#predictionResult').html('<div class="loader"><div class="spinner"></div></div>');
+      
+      $.post('/predict', JSON.stringify({sk_id: parseInt(skId)}), function(data) {
+        if (data.error) {
+          $('#predictionResult').html('<p class="small" style="color:#ff2d95">Error: ' + data.error + '</p>');
+        } else {
+          let riskClass = 'risk-medium';
+          if (data.gb_probability > 0.7) riskClass = 'risk-high';
+          else if (data.gb_probability < 0.3) riskClass = 'risk-low';
+          
+          $('#predictionResult').html(`
+            <h3>Prediction Results for SK_ID_CURR: ${skId}</h3>
+            <p>Logistic Regression Probability: <strong>${(data.lr_probability * 100).toFixed(2)}%</strong></p>
+            <p>Gradient Boosting Probability: <strong>${(data.gb_probability * 100).toFixed(2)}%</strong></p>
+            <p>Risk Category: <span class="risk-badge ${riskClass}">${data.risk_category}</span></p>
+            ${data.gb_probability > 0.5 ? '<p class="small">⚠️ This applicant has a high probability of default</p>' : 
+              data.gb_probability > 0.3 ? '<p class="small">⚠️ This applicant has a moderate probability of default</p>' : 
+              '<p class="small">✅ This applicant has a low probability of default</p>'}
+          `);
+        }
+      }).fail(function() {
+        $('#predictionResult').html('<p class="small" style="color:#ff2d95">Error connecting to prediction API</p>');
+      });
+    }
+    
+    function showLoader(chartId) {
+      $('#' + chartId).closest('.chart').append('<div class="loader"><div class="spinner"></div></div>');
+    }
+    
+    function hideLoader(chartId) {
+      $('#' + chartId).closest('.chart').find('.loader').remove();
+    }
+    
+    function showToast(message) {
+      $('<div class="toast">' + message + '</div>').appendTo('body').fadeIn().delay(3000).fadeOut(function() {
+        $(this).remove();
+      });
+    }
+  </script>
+</body>
+</html>
